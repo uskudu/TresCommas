@@ -28,15 +28,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = storage.SaveURL("https://google.com", "google")
-	if err != nil {
-		log.Error("failed to save url", err)
-		os.Exit(1)
-	}
-
-	log.Info("saved url")
-
 	_ = storage
+
 	// todo: init router: chi, "chi render"
 
 	// todo: init server:

@@ -2,7 +2,9 @@ package sqlite
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"sptringTresRestAPI/internal/storage"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -50,4 +52,23 @@ func (s *Storage) SaveURL(urlToSave string, alias string) error {
 	}
 
 	return nil
+}
+
+func (s *Storage) GetURL(alias string) (string, error) {
+	const op = "storage.sqlite.GetURL"
+	var url string
+
+	err := s.db.QueryRow(
+		"select url from url where alias = ?",
+		alias,
+	).Scan(&url)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", storage.ErrURLNotFound
+		}
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	return url, nil
 }
