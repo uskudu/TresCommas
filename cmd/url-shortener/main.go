@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"os"
 	"sptringTresRestAPI/internal/config"
+	"sptringTresRestAPI/internal/storage/sqlite"
 )
 
 const (
@@ -18,12 +19,15 @@ func main() {
 	log := setupLogger(cfg.Env)
 
 	log.Info("starting url-shortener", slog.String("env", cfg.Env))
-
 	log.Debug("debug messages are enabled")
-	// todo: init logger: slog
 
 	// todo: init storage: sqlite, postgresql
-
+	storage, err := sqlite.NewStorage(cfg.StoragePath)
+	if err != nil {
+		log.Error("failed to load to init storage", err)
+		os.Exit(1)
+	}
+	_ = storage
 	// todo: init router: chi, "chi render"
 
 	// todo: init server:
