@@ -5,6 +5,9 @@ import (
 	"os"
 	"sptringTresRestAPI/internal/config"
 	"sptringTresRestAPI/internal/storage/sqlite"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 const (
@@ -14,31 +17,34 @@ const (
 )
 
 func main() {
+	// config
 	cfg := config.MustLoad()
 
+	// log
 	log := setupLogger(cfg.Env)
 
 	log.Info("starting url-shortener", slog.String("env", cfg.Env))
 	log.Debug("debug messages are enabled")
 
-	// todo: init storage: sqlite, postgresql
+	// todo: init storage: postgresql
+	// storage
 	storage, err := sqlite.NewStorage(cfg.StoragePath)
 	if err != nil {
 		log.Error("failed to load to init storage", err)
 		os.Exit(1)
 	}
-
 	_ = storage
 
-	err = storage.SaveURL("https://www.github.com", "github")
-	if err != nil {
-		log.Error("url not found", err)
-		os.Exit(1)
-	}
+	// router chi
+	router := chi.NewRouter()
 
-	// todo: init router: chi, "chi render"
+	router.Use(middleware.RequestID)
+	router.Use(middleware.RealIP)
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.URLFormat)
 
-	// todo: init server:
+	// todo: init server
 
 }
 
