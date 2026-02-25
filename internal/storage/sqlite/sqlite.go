@@ -24,15 +24,30 @@ func NewStorage(storagePath string) (*Storage, error) {
 	}
 
 	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS url(
-			id INTEGER PRIMARY KEY,
-			alias TEXT NOT NULL UNIQUE,
-			url TEXT NOT NULL
+		create table if not exists url(
+			id integer primary key,
+			alias text not null unique,
+			url text not null
 		);
 	`)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
-	
+
 	return &Storage{db: db}, nil
+}
+
+func (s *Storage) SaveURL(urlToSave string, alias string) error {
+	const op = "storage.sqlite.SaveURL"
+
+	_, err := s.db.Exec(
+		"insert into url(url, alias) values (?, ?)",
+		urlToSave,
+		alias,
+	)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
 }
