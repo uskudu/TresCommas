@@ -30,6 +30,12 @@ func main() {
 
 	_ = storage
 
+	err = storage.SaveURL("https://www.github.com", "github")
+	if err != nil {
+		log.Error("url not found", err)
+		os.Exit(1)
+	}
+
 	// todo: init router: chi, "chi render"
 
 	// todo: init server:
