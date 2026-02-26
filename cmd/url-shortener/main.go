@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"sptringTresRestAPI/internal/config"
+	"sptringTresRestAPI/internal/http-server/handlers/url/del"
 	"sptringTresRestAPI/internal/http-server/handlers/url/get"
 	"sptringTresRestAPI/internal/http-server/handlers/url/save"
 	"sptringTresRestAPI/internal/storage/sqlite"
@@ -49,6 +50,7 @@ func main() {
 
 	router.Post("/url", save.New(log, storage))
 	router.Get("/url/{alias}", get.Get(log, storage))
+	router.Delete("/url/{alias}", del.Delete(log, storage))
 
 	// server
 	log.Info("starting server at", "address", cfg.Address)
