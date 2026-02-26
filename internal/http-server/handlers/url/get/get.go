@@ -1,10 +1,11 @@
-package save
+package get
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	resp "sptringTresRestAPI/internal/lib/api/response"
-	"sptringTresRestAPI/internal/lib/random"
+	"sptringTresRestAPI/internal/storage"
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
@@ -12,32 +13,29 @@ import (
 )
 
 type Request struct {
-	URL   string `json:"url" validate:"required,url"`
 	Alias string `json:"alias,omitempty"`
 }
 
 type Response struct {
 	resp.Response
-	Alias string `json:"alias,omitempty"`
+	URL string `json:"url"`
 }
 
-const aliasLength = 7
-
-type URLSaver interface {
-	SaveURL(urlToSave string, alias string) error
+type URLGetter interface {
+	GetURL(alias string) (string, error)
 }
 
-func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
+func Get(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const op = "handlers.url.save.New"
-		log := slog.With(slog.String("op", op),
+		const op = "handlers.url.get.Get"
+		log = slog.With(slog.String("op", op),
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
 		var req Request
 		err := render.DecodeJSON(r.Body, &req)
 		if err != nil {
-			log.Error("failed to decode request", slog.String("error", err.Error()))
+			log.Error("failed to decode request body", err)
 
 			render.JSON(w, r, resp.Error("failed to decode request"))
 			return
@@ -46,29 +44,30 @@ func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
 		log.Info("request body decoded", slog.Any("request", req))
 
 		if err = validator.New().Struct(req); err != nil {
-			log.Error("invalid request", slog.String("error", err.Error()))
+			log.Error("invalid request", err)
 
 			render.JSON(w, r, resp.Error("invalid request"))
 			return
 		}
 
-		alias := req.Alias
-		if alias == "" {
-			alias = random.NewRandomString(aliasLength)
-		}
-
-		err = urlSaver.SaveURL(req.URL, alias)
+		url, err := urlGetter.GetURL(req.Alias)
 		if err != nil {
-			log.Error("failed to save url", slog.String("error", err.Error()))
+			if errors.Is(err, storage.ErrURLNotFound) {
+				log.Info("no saved url for the alias", req.Alias)
+				render.JSON(w, r, resp.Error("url not found"))
+				return
+			}
+			log.Error("failed to get url", err)
 
-			render.JSON(w, r, resp.Error("failed to save url"))
+			render.JSON(w, r, resp.Error("failed to get url"))
 			return
 		}
 
-		log.Info("url saved", req.URL)
+		log.Info("url was found", req.Alias, url)
+
 		render.JSON(w, r, Response{
 			Response: resp.OK(),
-			Alias:    alias,
+			URL:      url,
 		})
 		return
 	}
