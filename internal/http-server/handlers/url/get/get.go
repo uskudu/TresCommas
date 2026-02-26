@@ -7,14 +7,10 @@ import (
 	resp "sptringTresRestAPI/internal/lib/api/response"
 	"sptringTresRestAPI/internal/storage"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
-	"github.com/go-playground/validator/v10"
 )
-
-type Request struct {
-	Alias string `json:"alias,omitempty"`
-}
 
 type Response struct {
 	resp.Response
@@ -28,42 +24,34 @@ type URLGetter interface {
 func Get(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.url.get.Get"
-		log = slog.With(slog.String("op", op),
+		log := slog.With(slog.String("op", op),
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
-		var req Request
-		err := render.DecodeJSON(r.Body, &req)
-		if err != nil {
-			log.Error("failed to decode request body", err)
-
-			render.JSON(w, r, resp.Error("failed to decode request"))
+		alias := chi.URLParam(r, "alias")
+		if alias == "" {
+			log.Error("alias is empty")
+			render.JSON(w, r, resp.Error("alias is required"))
 			return
 		}
 
-		log.Info("request body decoded", slog.Any("request", req))
-
-		if err = validator.New().Struct(req); err != nil {
-			log.Error("invalid request", err)
-
-			render.JSON(w, r, resp.Error("invalid request"))
-			return
-		}
-
-		url, err := urlGetter.GetURL(req.Alias)
+		url, err := urlGetter.GetURL(alias)
 		if err != nil {
 			if errors.Is(err, storage.ErrURLNotFound) {
-				log.Info("no saved url for the alias", req.Alias)
+				log.Info("url not found", slog.String("alias", alias))
 				render.JSON(w, r, resp.Error("url not found"))
 				return
 			}
-			log.Error("failed to get url", err)
-
+			log.Error(
+				"failed to get url",
+				slog.String("error", err.Error()),
+				slog.String("alias", alias),
+			)
 			render.JSON(w, r, resp.Error("failed to get url"))
 			return
 		}
 
-		log.Info("url was found", req.Alias, url)
+		log.Info("url found", slog.String(alias, url))
 
 		render.JSON(w, r, Response{
 			Response: resp.OK(),

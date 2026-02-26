@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"sptringTresRestAPI/internal/config"
+	"sptringTresRestAPI/internal/http-server/handlers/url/get"
 	"sptringTresRestAPI/internal/http-server/handlers/url/save"
 	"sptringTresRestAPI/internal/storage/sqlite"
 
@@ -47,6 +48,7 @@ func main() {
 	router.Use(middleware.URLFormat)
 
 	router.Post("/url", save.New(log, storage))
+	router.Get("/url/{alias}", get.Get(log, storage))
 
 	// server
 	log.Info("starting server at", "address", cfg.Address)
