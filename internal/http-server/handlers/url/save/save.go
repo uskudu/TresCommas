@@ -1,9 +1,12 @@
 package save
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	resp "sptringTresRestAPI/internal/lib/api/response"
+	"sptringTresRestAPI/internal/lib/random"
+	"sptringTresRestAPI/internal/storage"
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
@@ -55,9 +58,29 @@ func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
 
 		alias := req.Alias
 		_ = alias
-		//if alias == "" {
-		//	alias =
-		//}
+		if alias == "" {
+			alias = random.NewRandomString(aliasLength)
+		}
 
+		err = urlSaver.SaveURL(req.URL, alias)
+		if err != nil {
+			if errors.Is(err, storage.ErrURLExists) {
+				log.Info("url already exists", req.URL)
+				render.JSON(w, r, resp.Error("url already exists"))
+				return
+			}
+
+			log.Error("failed to save url", err)
+
+			render.JSON(w, r, resp.Error("failed to save url"))
+			return
+		}
+
+		log.Info("url saved", req.URL)
+		render.JSON(w, r, Response{
+			Response: resp.OK(),
+			Alias:    alias,
+		})
+		return
 	}
 }
