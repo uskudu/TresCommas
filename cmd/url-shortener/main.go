@@ -54,7 +54,7 @@ func main() {
 			cfg.HTTPServer.User: cfg.HTTPServer.Password,
 		}))
 
-		r.Post("/", save.New(log, storage))
+		r.Post("/", save.Save(log, storage))
 		r.Get("/{alias}", get.Get(log, storage))
 		r.Delete("/{alias}", del.Delete(log, storage))
 	})

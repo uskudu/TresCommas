@@ -23,13 +23,14 @@ type Response struct {
 
 const aliasLength = 7
 
+//go:generate moq -out save_mock.go . URLSaver
 type URLSaver interface {
 	SaveURL(urlToSave string, alias string) error
 }
 
-func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
+func Save(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const op = "handlers.url.save.New"
+		const op = "handlers.url.save.Save"
 		log := slog.With(slog.String("op", op),
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
@@ -65,7 +66,7 @@ func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
 			return
 		}
 
-		log.Info("url saved", req.URL)
+		log.Info("url saved", slog.String("url", req.URL))
 		render.JSON(w, r, Response{
 			Response: resp.OK(),
 			Alias:    alias,
