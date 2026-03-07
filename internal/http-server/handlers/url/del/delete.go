@@ -15,6 +15,7 @@ type Response struct {
 	Result string `json:"result"`
 }
 
+//go:generate moq -out=mock_delete.go . AliasDeleter
 type AliasDeleter interface {
 	DeleteAlias(alias string) error
 }
