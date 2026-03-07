@@ -17,6 +17,7 @@ type Response struct {
 	URL string `json:"url"`
 }
 
+//go:generate moq -out get_test.go . URLGetter
 type URLGetter interface {
 	GetURL(alias string) (string, error)
 }
@@ -28,6 +29,7 @@ func Get(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
+		// find this alias send through url param
 		alias := chi.URLParam(r, "alias")
 		if alias == "" {
 			log.Error("alias is empty")
@@ -51,7 +53,7 @@ func Get(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
 			return
 		}
 
-		log.Info("url found", slog.String(alias, url))
+		log.Info("url found", slog.String("alias", alias), slog.String("url", url))
 
 		render.JSON(w, r, Response{
 			Response: resp.OK(),
