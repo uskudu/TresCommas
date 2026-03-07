@@ -23,7 +23,7 @@ type Response struct {
 
 const aliasLength = 7
 
-//go:generate moq -out save_mock.go . URLSaver
+//go:generate moq -out save_moq.go . URLSaver
 type URLSaver interface {
 	SaveURL(urlToSave string, alias string) error
 }

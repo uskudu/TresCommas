@@ -17,7 +17,7 @@ type Response struct {
 	URL string `json:"url"`
 }
 
-//go:generate moq -out get_test.go . URLGetter
+//go:generate moq -out get_moq.go . URLGetter
 type URLGetter interface {
 	GetURL(alias string) (string, error)
 }

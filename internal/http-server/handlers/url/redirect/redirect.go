@@ -12,11 +12,12 @@ import (
 	"github.com/go-chi/render"
 )
 
+//go:generate moq -out redirect_moq.go . URLGetter
 type URLGetter interface {
 	GetURL(alias string) (string, error)
 }
 
-func New(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
+func Redirect(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.url.get.Get"
 		log := slog.With(slog.String("op", op),

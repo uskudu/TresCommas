@@ -59,7 +59,7 @@ func main() {
 		r.Delete("/{alias}", del.Delete(log, storage))
 	})
 
-	router.Get("/redirect/{alias}", redirect.New(log, storage))
+	router.Get("/redirect/{alias}", redirect.Redirect(log, storage))
 
 	// server
 	log.Info("starting server at", "address", cfg.Address)
